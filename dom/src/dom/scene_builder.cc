@@ -10,7 +10,7 @@ namespace hippy {
 inline namespace dom {
 
 void SceneBuilder::Create(const std::weak_ptr<DomManager>& dom_manager,
-                          std::vector<std::shared_ptr<DomNode>>&& nodes) {
+                          std::vector<std::shared_ptr<DomInfo>>&& nodes) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   ops_.emplace_back([dom_manager, move_nodes = std::move(nodes)]() mutable {
@@ -22,7 +22,7 @@ void SceneBuilder::Create(const std::weak_ptr<DomManager>& dom_manager,
 }
 
 void SceneBuilder::Update(const std::weak_ptr<DomManager>& dom_manager,
-                          std::vector<std::shared_ptr<DomNode>>&& nodes) {
+                          std::vector<std::shared_ptr<DomInfo>>&& nodes) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   ops_.emplace_back([dom_manager, move_nodes = std::move(nodes)]() mutable {
@@ -33,8 +33,19 @@ void SceneBuilder::Update(const std::weak_ptr<DomManager>& dom_manager,
   });
 }
 
+void SceneBuilder::Move(const std::weak_ptr<DomManager>& dom_manager, std::vector<std::shared_ptr<DomInfo>>&& nodes) {
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  ops_.emplace_back([dom_manager, move_nodes = std::move(nodes)]() mutable {
+    auto manager = dom_manager.lock();
+    if (manager) {
+      manager->MoveDomNodes(std::move(move_nodes));
+    }
+  });
+}
+
 void SceneBuilder::Delete(const std::weak_ptr<DomManager>& dom_manager,
-                          std::vector<std::shared_ptr<DomNode>>&& nodes) {
+                          std::vector<std::shared_ptr<DomInfo>>&& nodes) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   ops_.emplace_back([dom_manager, move_nodes = std::move(nodes)]() mutable {
@@ -89,7 +100,7 @@ void SceneBuilder::AddEventListener(const std::weak_ptr<Scope>& weak_scope, cons
 void SceneBuilder::RemoveEventListener(const std::weak_ptr<Scope>& weak_scope,
                                        const EventListenerInfo& event_listener_info) {
   std::lock_guard<std::mutex> lock(mutex_);
-  
+
   ops_.emplace_back([weak_scope, event_listener_info]() mutable {
     uint32_t dom_id = event_listener_info.dom_id;
     std::string event_name = event_listener_info.event_name;
