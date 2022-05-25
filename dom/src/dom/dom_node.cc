@@ -90,7 +90,6 @@ void DomNode::AddChildAt(const std::shared_ptr<DomNode>& dom_node, int32_t index
 
 int32_t DomNode::AddChildByRefInfo(const std::shared_ptr<DomInfo>& dom_info) {
   auto it = children_.begin();
-  int32_t insert_index = 0;
   std::shared_ptr<RefInfo> refInfo = dom_info->refInfo;
   if (refInfo) {
     while (it != children_.end()) {
@@ -98,7 +97,6 @@ int32_t DomNode::AddChildByRefInfo(const std::shared_ptr<DomInfo>& dom_info) {
         break;
       }
       it++;
-      insert_index++;
     }
     if (it == children_.end()) {
       children_.push_back(dom_info->domNode);
@@ -107,30 +105,25 @@ int32_t DomNode::AddChildByRefInfo(const std::shared_ptr<DomInfo>& dom_info) {
         children_.insert(it, dom_info->domNode);
       } else {
         children_.insert(++it, dom_info->domNode);
-        insert_index++;
       }
     }
   } else {
     children_.push_back(dom_info->domNode);
   }
   dom_info->domNode->SetParent(shared_from_this());
-  //  dom_info->domNode->SetRealIndex(insert_index);
-  //  while (it != children_.end()) {
-  //      it->get()->SetRealIndex(it->get()->GetRealIndex() + 1);
-  //      it++;
-  //  }
-  layout_node_->InsertChild(dom_info->domNode->GetLayoutNode(), (uint32_t)(insert_index));
-  return insert_index;
+  int32_t index = dom_info->domNode->GetRealIndex();
+  layout_node_->InsertChild(dom_info->domNode->GetLayoutNode(), static_cast<uint32_t>(index));
+  return index;
 }
 
 int32_t DomNode::GetChildIndex(uint32_t id) {
   int32_t index = -1;
   auto it = children_.begin();
   while (it != children_.end()) {
+    index++;
     if (it->get()->GetId() == id) {
       break;
     }
-    index++;
     it++;
   }
   return index;
@@ -162,6 +155,7 @@ std::shared_ptr<DomNode> DomNode::RemoveChildById(uint32_t id) {
       layout_node_->RemoveChild(child->GetLayoutNode());
       return child;
     }
+    it++;
   }
   return nullptr;
 }

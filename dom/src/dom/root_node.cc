@@ -99,13 +99,12 @@ void RootNode::UpdateDomNodes(std::vector<std::shared_ptr<DomInfo>>&& nodes) {
 void RootNode::MoveDomNodes(std::vector<std::shared_ptr<DomInfo>> &&nodes) {
     std::vector<std::shared_ptr<DomNode>> nodes_to_move;
     for (const auto& nodeInfo : nodes) {
-        auto node = nodeInfo->domNode;
-        std::shared_ptr<DomNode> parent_node = GetNode(node->GetPid());
+        std::shared_ptr<DomNode> parent_node = GetNode(nodeInfo->domNode->GetPid());
         if (parent_node == nullptr) {
             continue;
         }
+        auto node = parent_node->RemoveChildById(nodeInfo->domNode->GetId());
         nodes_to_move.push_back(node);
-        parent_node->RemoveChildAt(node->GetRealIndex());
         parent_node->AddChildByRefInfo(nodeInfo);
     }
     for(const auto& node: nodes_to_move) {

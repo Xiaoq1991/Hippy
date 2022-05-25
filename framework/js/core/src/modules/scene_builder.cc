@@ -261,11 +261,6 @@ CreateNode(const std::shared_ptr<Ctx> &context,
     return std::make_tuple(false, std::get<1>(pid_tuple), dom_node);
   }
 
-//  auto index_tuple = GetNodeIndex(context, node);
-//  if (!std::get<0>(index_tuple)) {
-//    return std::make_tuple(false, std::get<1>(index_tuple), dom_node);
-//  }
-
   auto view_name_tuple = GetNodeViewName(context, node);
   if (!std::get<0>(view_name_tuple)) {
     return std::make_tuple(false, std::get<1>(view_name_tuple), dom_node);
@@ -433,8 +428,36 @@ std::shared_ptr<InstanceDefine<SceneBuilder>> RegisterSceneBuilder(const std::we
     auto scope = weak_scope.lock();
     if (scope) {
       auto weak_dom_manager = scope->GetDomManager();
-      auto ret = HandleJsValue(scope->GetContext(), arguments[0], scope);
-      builder->Move(weak_dom_manager, std::move(std::get<2>(ret)));
+      std::shared_ptr<CtxValue> nodes = arguments[0];
+      std::shared_ptr<Ctx> context = scope->GetContext();
+      TDF_BASE_CHECK(context);
+      auto len = context->GetArrayLength(nodes);
+      std::vector<std::shared_ptr<DomInfo>> dom_infos;
+      for (uint32_t i = 0; i < len; ++i) {
+        std::shared_ptr<CtxValue> info = context->CopyArrayElement(nodes, i);
+        auto length = context->GetArrayLength(info);
+        if (length > 0) {
+          auto node = context->CopyArrayElement(info, 0);
+          auto id_tuple = GetNodeId(context, node);
+          if (!std::get<0>(id_tuple)) {
+            return nullptr;
+          }
+
+          auto pid_tuple = GetNodePid(context, node);
+          if (!std::get<0>(pid_tuple)) {
+            return nullptr;
+          }
+          if (length >= 2) {
+            auto ref_info_tuple = CreateRefInfo(
+                context, context->CopyArrayElement(info, 1), scope);
+            dom_infos.push_back(std::make_shared<DomInfo>(
+                std::make_shared<DomNode>(std::get<2>(id_tuple),
+                                          std::get<2>(id_tuple)),
+                std::get<2>(ref_info_tuple)));
+          }
+        }
+      }
+      builder->Move(weak_dom_manager, std::move(dom_infos));
     }
     return nullptr;
   };
@@ -452,8 +475,29 @@ std::shared_ptr<InstanceDefine<SceneBuilder>> RegisterSceneBuilder(const std::we
       std::shared_ptr<CtxValue> nodes = arguments[0];
       std::shared_ptr<Ctx> context = scope->GetContext();
       TDF_BASE_CHECK(context);
-      auto ret = HandleJsValue(scope->GetContext(), arguments[0], scope);
-      builder->Delete(weak_dom_manager, std::move(std::get<2>(ret)));
+      auto len = context->GetArrayLength(nodes);
+      std::vector<std::shared_ptr<DomInfo>> dom_infos;
+      for (uint32_t i = 0; i < len; ++i) {
+        std::shared_ptr<CtxValue> info = context->CopyArrayElement(nodes, i);
+        auto length = context->GetArrayLength(info);
+        if (length > 0) {
+          auto node = context->CopyArrayElement(info, 0);
+          auto id_tuple = GetNodeId(context, node);
+          if (!std::get<0>(id_tuple)) {
+            return nullptr;
+          }
+
+          auto pid_tuple = GetNodePid(context, node);
+          if (!std::get<0>(pid_tuple)) {
+            return nullptr;
+          }
+          dom_infos.push_back(std::make_shared<DomInfo>(
+              std::make_shared<DomNode>(std::get<2>(id_tuple),
+                                        std::get<2>(id_tuple)),
+              nullptr));
+        }
+      }
+      builder->Delete(weak_dom_manager, std::move(dom_infos));
     }
     return nullptr;
   };
