@@ -452,7 +452,7 @@ std::shared_ptr<InstanceDefine<SceneBuilder>> RegisterSceneBuilder(const std::we
                 context, context->CopyArrayElement(info, 1), scope);
             dom_infos.push_back(std::make_shared<DomInfo>(
                 std::make_shared<DomNode>(std::get<2>(id_tuple),
-                                          std::get<2>(id_tuple)),
+                                          std::get<2>(pid_tuple)),
                 std::get<2>(ref_info_tuple)));
           }
         }
@@ -493,7 +493,7 @@ std::shared_ptr<InstanceDefine<SceneBuilder>> RegisterSceneBuilder(const std::we
           }
           dom_infos.push_back(std::make_shared<DomInfo>(
               std::make_shared<DomNode>(std::get<2>(id_tuple),
-                                        std::get<2>(id_tuple)),
+                                        std::get<2>(pid_tuple)),
               nullptr));
         }
       }

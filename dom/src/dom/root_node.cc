@@ -104,8 +104,11 @@ void RootNode::MoveDomNodes(std::vector<std::shared_ptr<DomInfo>> &&nodes) {
             continue;
         }
         auto node = parent_node->RemoveChildById(nodeInfo->domNode->GetId());
+        if (node == nullptr) {
+            continue;
+        }
         nodes_to_move.push_back(node);
-        parent_node->AddChildByRefInfo(nodeInfo);
+        parent_node->AddChildByRefInfo(std::make_shared<DomInfo>(node, nodeInfo->refInfo));
     }
     for(const auto& node: nodes_to_move) {
         node->SetRenderInfo({node->GetId(), node->GetPid(), node->GetRealIndex()});
